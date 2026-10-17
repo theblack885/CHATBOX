@@ -34,9 +34,11 @@ object Repo {
 
     fun logout() = auth.signOut()
 
-    suspend fun currentUser(): UserProfile? =
-        db.collection("users").document(uid ?: return null).get().await()
+    suspend fun currentUser(): UserProfile? {
+        val id = uid ?: return null
+        return db.collection("users").document(id).get().await()
             .toObject(UserProfile::class.java)
+    }
 
     // ---------- Posts ----------
     fun feed(): Flow<List<Post>> = callbackFlow {
