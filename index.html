@@ -1,0 +1,350 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Insta Web</title>
+<style>
+/* Layout: single-column feed app, fixed header, fixed bottom pill nav, modal composer/auth */
+:root{
+  --bg:#f4f4fa; --surface:#ffffff; --surface-2:#ebebf4; --fg:#111118; --fg-dim:#6b6b7d;
+  --accent1:#7c4dff; --accent2:#ff2d87; --accent3:#ff9f43; --line:#e4e4ef;
+  --font-display:'Pacifico', cursive; --font-body:'Plus Jakarta Sans', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0a0f; --surface:#14141c; --surface-2:#1f1f2b; --fg:#ffffff; --fg-dim:#a3a3b8; --line:#26263a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0a0f; --surface:#14141c; --surface-2:#1f1f2b; --fg:#ffffff; --fg-dim:#a3a3b8; --line:#26263a;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-body);
+  margin:0; min-height:100%;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+.wrap{max-width:420px; margin:0 auto; padding-bottom:110px}
+a{color:inherit}
+.brand{
+  font-family:var(--font-display); font-size:30px;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  display:inline-block;
+}
+header.top{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:5;
+  background:var(--bg); padding:14px 0 8px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.iconbtn{background:none;border:none;color:var(--fg);cursor:pointer;padding:6px;display:flex;align-items:center}
+.iconbtn svg{width:24px;height:24px}
+
+/* stories row */
+.stories{display:flex;gap:14px;overflow-x:auto;padding:4px 0 14px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto;width:66px;cursor:pointer}
+.ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--accent1),var(--accent2),var(--accent3));display:flex;align-items:center;justify-content:center}
+.ring .avatar{width:100%;height:100%}
+.story span{font-size:11px;color:var(--fg);max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.avatar{border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;overflow:hidden;flex:0 0 auto}
+.avatar img{width:100%;height:100%;object-fit:cover}
+
+/* post card */
+.card{background:var(--surface);border-radius:28px;margin-bottom:16px;overflow:hidden}
+.card .head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.card .head .meta{display:flex;flex-direction:column}
+.card .head .name{font-weight:700;font-size:14px}
+.card .head .time{font-size:12px;color:var(--fg-dim)}
+.card .photo-wrap{padding:0 8px}
+.card .photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:22px;display:block;background:var(--surface-2)}
+.actions{display:flex;align-items:center;gap:4px;padding:6px 10px}
+.actions button{background:none;border:none;cursor:pointer;padding:8px;color:var(--fg);display:flex}
+.actions svg{width:26px;height:26px}
+.liked{color:var(--accent2)}
+.likes{font-weight:700;font-size:13px;padding:0 16px}
+.caption{padding:2px 16px 4px;font-size:14px;line-height:1.4}
+.caption b{font-weight:700}
+.viewcomments{padding:0 16px 12px;font-size:13px;color:var(--fg-dim);cursor:pointer}
+
+/* bottom nav */
+nav.bottom{
+  position:fixed; left:0; right:0;
+  bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  padding-left:max(28px, calc(env(safe-area-inset-left,0px) + 12px));
+  padding-right:max(28px, calc(env(safe-area-inset-right,0px) + 12px));
+  display:flex; justify-content:center; z-index:20;
+}
+.pill{
+  display:flex; align-items:center; justify-content:space-around; gap:6px;
+  background:var(--surface); border-radius:999px; padding:8px 10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.18); width:100%; max-width:360px;
+}
+.pill button{background:none;border:none;color:var(--fg-dim);cursor:pointer;padding:10px;border-radius:50%;display:flex}
+.pill button.active{color:var(--accent2)}
+.pill svg{width:26px;height:26px}
+.plusbtn{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2),var(--accent3));display:flex;align-items:center;justify-content:center;color:#fff}
+
+/* buttons/inputs */
+.btn-grad{
+  width:100%; height:50px; border:none; border-radius:999px; cursor:pointer;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
+  color:#fff; font-weight:700; font-size:15px; font-family:inherit;
+}
+.btn-grad:disabled{opacity:.45;cursor:default}
+.btn-outline{width:100%;height:48px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--fg);font-weight:700;cursor:pointer;font-family:inherit}
+input[type=text],input[type=email],input[type=password],textarea{
+  width:100%; background:var(--surface-2); border:1.5px solid transparent; border-radius:22px;
+  padding:13px 16px; font-size:14px; color:var(--fg); font-family:inherit; outline:none;
+}
+input:focus,textarea:focus{border-color:var(--accent2)}
+textarea{border-radius:18px; resize:vertical; min-height:70px}
+.field{margin-bottom:10px}
+.error{color:var(--accent2); font-size:13px; text-align:center; margin-top:6px}
+
+/* auth screen */
+#authScreen{
+  min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  padding:24px 0;
+}
+.authcard{background:var(--surface); border-radius:32px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,.12); width:100%}
+.authhead{text-align:center;margin-bottom:22px}
+.authhead p{color:var(--fg-dim);font-size:14px;margin-top:6px}
+.switcher{text-align:center;margin-top:14px}
+.switcher button{background:none;border:none;color:var(--accent2);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px}
+
+/* modal (composer / comments / edit profile) */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--bg);width:100%;max-width:460px;border-radius:28px 28px 0 0;max-height:88vh;overflow-y:auto;
+  padding:18px max(18px, env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px, env(safe-area-inset-right,0px));}
+.modal h2{margin:0 0 14px;font-size:19px}
+.picker{aspect-ratio:1/1;border-radius:24px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--fg-dim);overflow:hidden}
+.picker img{width:100%;height:100%;object-fit:cover}
+
+/* profile */
+.profilehead{display:flex;flex-direction:column;align-items:center;padding:18px 0 10px;text-align:center}
+.profilehead .avatar{width:104px;height:104px;font-size:36px}
+.profilehead h2{margin:10px 0 2px;font-size:20px}
+.profilehead .bio{color:var(--fg-dim);font-size:13px;max-width:280px}
+.stats{display:flex;gap:8px;width:100%;margin:14px 0}
+.stat{flex:1;background:var(--surface);border-radius:20px;padding:12px 6px;text-align:center}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--fg-dim)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:14px;cursor:pointer;background:var(--surface-2)}
+
+/* search */
+.userrow{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:22px;padding:12px;margin-bottom:8px;cursor:pointer}
+.userrow .uname{font-weight:700;font-size:14px}
+.userrow .ubio{font-size:12px;color:var(--fg-dim)}
+
+/* comments */
+.comment{display:flex;gap:10px;margin-bottom:12px}
+.comment .bubble{background:var(--surface-2);border-radius:18px;padding:8px 14px}
+.comment b{font-size:13px;display:block}
+.commentbar{display:flex;gap:8px;align-items:center;position:sticky;bottom:0;background:var(--bg);padding-top:10px}
+.sendbtn{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+
+.empty{text-align:center;color:var(--fg-dim);padding:60px 20px;font-size:14px;line-height:1.6}
+.hidden{display:none!important}
+[hidden]{display:none!important}
+#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13px;z-index:50;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.show{opacity:1}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+
+<div id="app">
+  <div id="authScreen" class="hidden">
+    <div class="wrap">
+      <div class="authhead">
+        <div class="brand" style="font-size:52px">Insta</div>
+        <p>Apne moments share karo</p>
+      </div>
+      <div class="authcard">
+        <div class="field"><input id="authEmail" type="email" placeholder="Email" autocomplete="email"></div>
+        <div class="field hidden" id="authUsernameField"><input id="authUsername" type="text" placeholder="Username"></div>
+        <div class="field"><input id="authPass" type="password" placeholder="Password (min 6)" autocomplete="current-password"></div>
+        <div class="error hidden" id="authError"></div>
+        <div style="margin-top:14px"><button class="btn-grad" id="authSubmit">Log in</button></div>
+      </div>
+      <div class="switcher"><button id="authSwitch">Naya account banao</button></div>
+    </div>
+  </div>
+
+  <div id="mainScreen" class="hidden">
+    <div class="wrap" id="screenHost"></div>
+    <nav class="bottom">
+      <div class="pill">
+        <button class="navbtn active" data-tab="feed" title="Home">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/></svg>
+        </button>
+        <button class="navbtn" data-tab="search" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="iconbtn plusbtn" id="navAdd" title="Add post">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="navbtn" data-tab="profile" title="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ---------- Firebase ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyALdpHCmoRJdPEnMbijVgE6IY-qrrnAy8I",
+  authDomain: "instagram-40532.firebaseapp.com",
+  projectId: "instagram-40532",
+  storageBucket: "instagram-40532.firebasestorage.app",
+  messagingSenderId: "943293591985",
+  appId: "1:943293591985:web:ae83ec93c8a35bc1c24d90"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ---------- helpers ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+const esc = s => (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function timeAgo(ts){
+  if(!ts) return '';
+  const d = (Date.now() - ts) / 1000;
+  if (d < 60) return 'abhi';
+  if (d < 3600) return Math.floor(d/60) + ' min pehle';
+  if (d < 86400) return Math.floor(d/3600) + ' ghante pehle';
+  return Math.floor(d/86400) + ' din pehle';
+}
+function avatarHTML(photo, name, size){
+  if (photo) return `<div class="avatar" style="width:${size}px;height:${size}px"><img src="${photo}" alt=""></div>`;
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*0.4}px">${esc((name||'?').slice(0,1).toUpperCase())}</div>`;
+}
+function ringAvatarHTML(photo, name, size){
+  return `<div class="ring" style="width:${size}px;height:${size}px">${avatarHTML(photo,name,size-9)}</div>`;
+}
+function resizeImage(file, maxSide, quality){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        width = Math.round(width*scale); height = Math.round(height*scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- state ---------- */
+let me = null;         // {uid, username, bio, photo, followers, following}
+let currentTab = 'feed';
+const unsub = {};       // active listeners to clean up
+
+/* ---------- auth screen ---------- */
+let authMode = 'login';
+$('#authSwitch').onclick = () => {
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  $('#authUsernameField').classList.toggle('hidden', authMode === 'login');
+  $('#authSubmit').textContent = authMode === 'login' ? 'Log in' : 'Sign up';
+  $('#authSwitch').textContent = authMode === 'login' ? 'Naya account banao' : 'Pehle se account hai? Log in';
+  $('#authError').classList.add('hidden');
+};
+$('#authSubmit').onclick = async () => {
+  const email = $('#authEmail').value.trim();
+  const pass = $('#authPass').value;
+  const username = $('#authUsername').value.trim();
+  const errEl = $('#authError');
+  errEl.classList.add('hidden');
+  $('#authSubmit').disabled = true;
+  $('#authSubmit').textContent = 'Wait...';
+  try {
+    if (authMode === 'login') {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } else {
+      if (!username) throw new Error('Username daalo');
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await db.collection('users').doc(cred.user.uid).set({
+        uid: cred.user.uid, username: username.toLowerCase(), bio: '', photo: '',
+        followers: [], following: []
+      });
+    }
+  } catch(e){
+    errEl.textContent = e.message || 'Kuch galat hua';
+    errEl.classList.remove('hidden');
+  }
+  $('#authSubmit').disabled = false;
+  $('#authSubmit').textContent = authMode === 'login' ? 'Log in' : 'Sign up';
+};
+
+/* ---------- auth state ---------- */
+auth.onAuthStateChanged(async (user) => {
+  Object.values(unsub).forEach(fn => { try{fn()}catch(e){} });
+  if (!user) {
+    me = null;
+    $('#authScreen').classList.remove('hidden');
+    $('#mainScreen').classList.add('hidden');
+    return;
+  }
+  const snap = await db.collection('users').doc(user.uid).get();
+  me = snap.exists ? snap.data() : { uid:user.uid, username:user.email.split('@')[0], bio:'', photo:'', followers:[], following:[] };
+  $('#authScreen').classList.add('hidden');
+  $('#mainScreen').classList.remove('hidden');
+  currentTab = 'feed';
+  renderTab();
+});
+
+$$('.navbtn').forEach(b => b.onclick = () => {
+  currentTab = b.dataset.tab;
+  $$('.navbtn').forEach(x=>x.classList.toggle('active', x===b));
+  renderTab();
+});
+$('#navAdd').onclick = () => openComposer();
+
+function renderTab(){
+  if (currentTab === 'feed') renderFeed();
+  else if (currentTab === 'search') renderSearch();
+  else if (currentTab === 'profile') renderProfile(me.uid, false);
+}
+
+/* ---------- FEED ---------- */
+function renderFeed(){
+  const host = $('#screenHost');
+  host.innerHTML = `
+    <header class="top"><span class="brand">Insta</span></header>
+    <div class="stories" id="stories"></div>
+    <div id="feedList"><div class="empty">Load ho raha hai...</div></div>
+  `;
+  if (unsub.feed) unsub.feed();
+  unsub.feed = db.collection('posts').orderBy('timestamp','desc').limit(50)
+    .onSnapshot(snap => {
+      const posts = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      const list = $('#feedList');
+      if (!posts.length){
+        list.innerHTML =
